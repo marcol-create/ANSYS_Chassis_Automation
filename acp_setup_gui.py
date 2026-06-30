@@ -38,7 +38,8 @@ PARTS = [
 ]
 
 # Parts whose solid model uses Monolithic extrusion (all others = Analysis Ply Wise).
-MONOLITHIC_PARTS = {"Roof"}
+# Empty -> every part uses Analysis Ply Wise.
+MONOLITHIC_PARTS = set()
 
 # ---------------------------------------------------------------------
 # GET THE OPEN MODEL
