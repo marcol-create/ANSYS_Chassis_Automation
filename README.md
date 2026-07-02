@@ -69,4 +69,4 @@ Finally, the script saves the completed Workbench project.
 
 ---
 
-After the script finishes, the project is fully prepared for composite layup in ACP and structural analysis of the bumper models, eliminating nearly all repetitive setup steps.
+After the script finishes, the project is fully prepared for composite layup in ACP and structural analysis of the bumper models, eliminating nearly all repetitive setup steps. Next steps to work on, update ACP model, try to work on automating meshing for ACP part. 
