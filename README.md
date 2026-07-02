@@ -107,6 +107,9 @@ The script automatically:
 - ✅ Links all required systems automatically
 - ✅ Saves the completed Workbench project
 
+<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/cfa23791-5ce3-4ab2-8485-27b22d2ccaec" />
+
+
 ---
 
 # ACP Setup
