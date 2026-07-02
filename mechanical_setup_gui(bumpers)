@@ -1,0 +1,51 @@
+# =====================================================================
+#  MECHANICAL setup  --  IN-GUI SCRIPT (ACT / IronPython)
+# =====================================================================
+#  Run from inside Ansys Mechanical (2025 R2):
+#     Ribbon > Automation > Run Macro...   ->  pick this .py
+#     (or paste into the scripting console).
+#  Operates on the model that is CURRENTLY OPEN (single-body part).
+#
+#  Does three things:
+#    1. Sets body thickness to 1 mm (surface body).
+#    2. Sets global mesh element size to 3 mm.
+#    3. Generates (updates) the mesh.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# CONFIG
+# ---------------------------------------------------------------------
+THICKNESS    = Quantity("1 [mm]")   # shell thickness
+ELEMENT_SIZE = Quantity("3 [mm]")   # global mesh element size
+
+# ---------------------------------------------------------------------
+# SETUP
+# ---------------------------------------------------------------------
+model = ExtAPI.DataModel.Project.Model
+bodies = model.GetChildren(DataModelObjectCategory.Body, True)
+print("Found %d body(ies)." % len(bodies))
+
+# ---------------------------------------------------------------------
+# 1. THICKNESS = 1 mm
+# ---------------------------------------------------------------------
+with Transaction():
+    for body in bodies:
+        try:
+            body.Thickness = THICKNESS       # surface bodies only
+            print("Thickness set on: %s" % body.Name)
+        except Exception:
+            print("  Skipped thickness (not a surface body): %s" % body.Name)
+
+# ---------------------------------------------------------------------
+# 2. MESH ELEMENT SIZE = 3 mm
+# ---------------------------------------------------------------------
+mesh = model.Mesh
+mesh.ElementSize = ELEMENT_SIZE
+mesh.UseAdaptiveSizing = False               # honor the size we set exactly
+print("Element size set to 3 mm.")
+
+# ---------------------------------------------------------------------
+# 3. GENERATE / UPDATE MESH
+# ---------------------------------------------------------------------
+mesh.GenerateMesh()
+print("Mesh generated: %d nodes, %d elements. Done." % (mesh.Nodes, mesh.Elements))
