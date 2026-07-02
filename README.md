@@ -1,21 +1,79 @@
-# ANSYS Chassis Automation
-Scripts written to run within Ansys GUI to automate tedious/repetitive parts of simulation setup. Tailored to Stanford Solar Car "Sunstruck" chassis.
+# ANSYS GUI Automation Scripts
 
+Python scripts written to run inside the **ANSYS Mechanical GUI** to automate repetitive simulation setup tasks for the **Stanford Solar Car – Sunstruck chassis**.
 
-First, create a step file for the panels, one for the front bumper, and one for the side bumper. 
+---
 
-Create an ACP block for the panel file, then create a mechanical model block for the front bumper, and a mechanical model block for the side bumper. 
+## Setup
 
-In the ACP block, import your material data for alluminum honeycomb and carbon fiber. 
-Then, in that same ACP block, upload your chassis step file, with just the panels. 
+### 1. Prepare Geometry
 
-For one mechanical model geometry, upload the step file for the side bumper, and in the other, upload the step file for the front bumper. 
+Create three separate STEP files:
 
-Then open the ACP model; this should take you to ANSYS Mechanical. 
-In Mechanical, go to "Automation" and press "Run Macro". Upload the "mechanical_setup_gui.py" 
-This will first give all geometries a thickness 1mm, and then cocomplete the step of creating a named selection for each geometry, including each face that was grouped in the .step file. 
+- 📦 Chassis panels
+- 🚗 Front bumper
+- 🚗 Side bumper
 
+---
 
+### 2. Create Workbench Project
+
+Create the following systems:
+
+| System | Geometry |
+|--------|----------|
+| ACP (Pre) | Chassis panels |
+| Mechanical | Front bumper |
+| Mechanical | Side bumper |
+
+---
+
+### 3. Configure ACP
+
+Inside the **ACP** system:
+
+1. Import the material data:
+   - Carbon Fiber
+   - Aluminum Honeycomb
+2. Import the **chassis panels STEP file**.
+
+---
+
+### 4. Configure Mechanical Models
+
+Import the bumper geometries:
+
+- **Mechanical Model 1** → Side bumper STEP file
+- **Mechanical Model 2** → Front bumper STEP file
+
+---
+
+## Running the Automation Script
+
+1. Open the **ACP** model (this launches **ANSYS Mechanical**).
+2. In Mechanical, navigate to:
+
+```
+Automation → Run Macro
+```
+
+3. Select:
+
+```
+mechanical_setup_gui.py
+```
+
+---
+
+## What the Script Does
+
+The script automatically:
+
+- ✅ Assigns a **1 mm thickness** to every geometry
+- ✅ Creates **Named Selections** for every body
+- ✅ Creates **Named Selections** for every grouped face imported from the STEP file
+
+This eliminates the repetitive manual setup required before composite layup and structural analysis.
 
 
 
