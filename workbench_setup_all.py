@@ -1,43 +1,45 @@
 # =====================================================================
-#  WORKBENCH: import geometry (via file picker) + set up Mechanical
+#  WORKBENCH: FULL SETUP IN ONE SCRIPT
 # =====================================================================
-#  Run from the Workbench Project window, AFTER workbench_schematic.py:
+#  Run from the Workbench Project window (start from an EMPTY project):
 #     File > Scripting > Run Script File...  -> pick THIS file
 #
-#  For each block it pops up a file picker so you choose THIS iteration's
-#  STEP file, attaches it, opens Mechanical, runs the right setup, closes.
-#
-#    Chassis panels (ACP Pre): pick STEP -> 1 mm thickness on every body
-#                              + one Named Selection per body (all faces,
-#                              "Block Name|" prefix stripped)
-#    Each bumper (Mechanical): pick STEP -> 1 mm thickness + 3 mm mesh + generate
-#
-#  Cancel a picker to leave that block's existing geometry untouched.
+#  Does everything in one run:
+#    1. Builds the 5 blocks (ACP Pre + 2 analysis + 2 Mechanical Model)
+#    2. Imports material files (*Al_HC*, *CF_Limits*) into block A
+#    3. Prompts you for a STEP file for the chassis + each bumper
+#    4. Runs Mechanical setup:
+#         chassis -> 1 mm thickness + Named Selection per body
+#         bumpers -> 1 mm thickness + 3 mm mesh + generate
+#    5. Saves (if the project has been saved once already)
 # =====================================================================
 
-# (title-search term, kind, friendly label for the picker)
-TASKS = [
-    ("panels",       "chassis", "Chassis panels"),
-    ("side bumper",  "bumper",  "Side bumper"),
-    ("front bumper", "bumper",  "Front bumper"),
-]
+import os
 
-# Optional hard-coded fallbacks if the file dialog misbehaves in your
-# install. Leave "" to just skip. e.g. "Chassis panels": "C:/geo/chassis.step"
-FALLBACK_PATHS = {
-    "Chassis panels": "",
-    "Side bumper":    "",
-    "Front bumper":   "",
-}
+# ---------------------------------------------------------------------
+# CONFIG
+# ---------------------------------------------------------------------
+SEARCH_ROOTS = [os.path.expanduser("~")]        # where to look for materials
+MATERIAL_NAME_KEYS = ["Al_HC", "CF_Limits"]
+MATERIAL_EXTS = (".xml", ".engd", ".eng")
+SKIP_DIRS = set(["appdata", "$recycle.bin", "windows", "program files",
+                 "program files (x86)", "programdata", "node_modules", ".git",
+                 "application data", "local settings", "my documents",
+                 "cookies", "nethood", "printhood", "recent"])
 
 # How to open Mechanical: "" (visible, most reliable) / "Interactive" / "Hidden"
 EDIT_MODE = "Interactive"
 
+# Fallback STEP paths if a file dialog is cancelled/unavailable ("" = skip)
+FALLBACK_PATHS = {"Chassis panels": "", "Side bumper": "", "Front bumper": ""}
 
-# --- Mechanical-side scripts (run INSIDE Mechanical) ----------------
+
+# ---------------------------------------------------------------------
+# Mechanical-side scripts (run INSIDE Mechanical via SendCommand)
+# ---------------------------------------------------------------------
 CHASSIS_CMD = '''
 THICKNESS = Quantity("1 [mm]")
-NAME_DELIMITER = "|"     # "Block Name| Top" -> "Top"; set "" to keep full name
+NAME_DELIMITER = "|"
 
 def clean_name(raw):
     if NAME_DELIMITER and NAME_DELIMITER in raw:
@@ -46,14 +48,12 @@ def clean_name(raw):
 
 model  = ExtAPI.DataModel.Project.Model
 bodies = model.GetChildren(DataModelObjectCategory.Body, True)
-
 with Transaction():
     for body in bodies:
         try:
             body.Thickness = THICKNESS
         except Exception:
             pass
-
 with Transaction():
     for body in bodies:
         face_ids = [face.Id for face in body.GetGeoBody().Faces]
@@ -86,31 +86,57 @@ mesh.GenerateMesh()
 CMD_BY_KIND = {"chassis": CHASSIS_CMD, "bumper": BUMPER_CMD}
 
 
-# --- file picker (via .NET WinForms) --------------------------------
+# ---------------------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------------------
+def get_template(name, solver=None):
+    try:
+        if solver:
+            return GetTemplate(TemplateName=name, Solver=solver)
+        return GetTemplate(TemplateName=name)
+    except Exception:
+        if solver:
+            return GetTemplate(TemplateName="%s (%s)" % (name, solver))
+        raise
+
+
+def find_material_files(roots, key):
+    hits, seen, key_low = [], set(), key.lower()
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: None):
+            dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIRS]
+            for fname in filenames:
+                low = fname.lower()
+                if key_low in low and low.endswith(MATERIAL_EXTS):
+                    full = os.path.join(dirpath, fname).replace("\\", "/")
+                    if full not in seen:
+                        seen.add(full); hits.append(full)
+    try:
+        hits.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+    except Exception:
+        pass
+    return hits
+
+
 def pick_step_file(label):
     try:
         import clr
         clr.AddReference("System.Windows.Forms")
         from System.Windows.Forms import OpenFileDialog, DialogResult
         from System.Threading import Thread, ThreadStart, ApartmentState
-
         holder = {"path": None}
-
         def _show():
             dlg = OpenFileDialog()
             dlg.Title = "Select STEP file for: %s" % label
             dlg.Filter = "STEP files (*.step;*.stp)|*.step;*.stp|All files (*.*)|*.*"
-            dlg.Multiselect = False
             dlg.RestoreDirectory = True
             if dlg.ShowDialog() == DialogResult.OK:
                 holder["path"] = dlg.FileName
-
-        # WinForms dialogs must run on an STA thread; the Workbench script
-        # runner is not STA, so run the dialog on its own STA thread.
         t = Thread(ThreadStart(_show))
         t.SetApartmentState(ApartmentState.STA)
-        t.Start()
-        t.Join()
+        t.Start(); t.Join()
         return holder["path"]
     except Exception, ex:
         print("  (file dialog unavailable: %s)" % ex)
@@ -118,23 +144,10 @@ def pick_step_file(label):
 
 
 def choose_geometry(label):
-    """Dialog first; fall back to a configured path; else None (skip)."""
     path = pick_step_file(label)
     if not path:
         path = FALLBACK_PATHS.get(label, "")
     return path if path else None
-
-
-# --- helpers --------------------------------------------------------
-def system_by_title(term):
-    want = term.strip().lower()
-    for s in GetAllSystems():
-        try:
-            if want in s.DisplayText.strip().lower():
-                return s
-        except Exception:
-            pass
-    return None
 
 
 def open_model(model):
@@ -146,37 +159,74 @@ def open_model(model):
         model.Edit()
 
 
-# --- run ------------------------------------------------------------
-for term, kind, label in TASKS:
-    sysx = system_by_title(term)
-    if sysx is None:
-        print("SKIP - no block matching '%s'" % term)
-        continue
+# =====================================================================
+# 1. BUILD THE SCHEMATIC
+# =====================================================================
+sysA = get_template("ACP (Pre)").CreateSystem()
+sysA.DisplayText = "Panels"
+print("A created: Panels")
+
+# materials into block A
+eng = sysA.GetContainer(ComponentName="Engineering Data")
+for key in MATERIAL_NAME_KEYS:
+    files = find_material_files(SEARCH_ROOTS, key)
+    if files:
+        try:
+            eng.Import(Source=files[0]); print("Imported '%s': %s" % (key, files[0]))
+        except Exception, ex:
+            print("Material import failed for '%s': %s" % (key, ex))
+    else:
+        print("WARNING: no material file matching '%s'" % key)
+
+sysB = get_template("Static Structural", "ANSYS").CreateSystem(Position="Right", RelativeTo=sysA)
+sysB.DisplayText = "Side Impact"
+print("B created: Side Impact")
+
+sysC = get_template("Structural Optimization", "ANSYS").CreateSystem(Position="Below", RelativeTo=sysB)
+sysC.DisplayText = "Front Impact"
+print("C created: Front Impact")
+
+tmpl_mm = get_template("Mechanical Model")
+sysD = tmpl_mm.CreateSystem(Position="Below", RelativeTo=sysA)
+sysD.DisplayText = "Side bumper"
+print("D created: Side bumper")
+
+sysE = tmpl_mm.CreateSystem(Position="Below", RelativeTo=sysD)
+sysE.DisplayText = "Front Bumper"
+print("E created: Front Bumper")
+
+
+# =====================================================================
+# 2. GEOMETRY (via picker) + MECHANICAL SETUP
+# =====================================================================
+# (system, kind, picker label)
+GEO_TASKS = [
+    (sysA, "chassis", "Chassis panels"),
+    (sysD, "bumper",  "Side bumper"),
+    (sysE, "bumper",  "Front bumper"),
+]
+
+for sysx, kind, label in GEO_TASKS:
     try:
-        # 1) attach geometry chosen by the user (or skip if cancelled)
         path = choose_geometry(label)
         if path:
-            geom = sysx.GetContainer(ComponentName="Geometry")
-            geom.SetFile(FilePath=path.replace("\\", "/"))
+            sysx.GetContainer(ComponentName="Geometry").SetFile(FilePath=path.replace("\\", "/"))
             print("Geometry set for '%s': %s" % (sysx.DisplayText, path))
         else:
-            print("No file chosen for '%s' - using existing geometry." % sysx.DisplayText)
-
-        # 2) open Mechanical and run the setup
-        comp = sysx.GetComponent(Name="Model")
-        comp.Refresh()
+            print("No file chosen for '%s' - skipping its setup." % sysx.DisplayText)
+            continue
+        comp = sysx.GetComponent(Name="Model"); comp.Refresh()
         model = sysx.GetContainer(ComponentName="Model")
         open_model(model)
         model.SendCommand(Language="Python", Command=CMD_BY_KIND[kind])
         model.Exit()
-        print("Done (%s): %s" % (kind, sysx.DisplayText))
+        print("Setup done (%s): %s" % (kind, sysx.DisplayText))
     except Exception, ex:
-        print("ERROR on '%s': %s" % (term, ex))
+        print("ERROR on '%s': %s" % (label, ex))
 
 try:
-    Save(Overwrite=True)
-    print("Project saved.")
+    Save(Overwrite=True); print("Project saved.")
 except Exception, ex:
-    print("Not saved (save manually): %s" % ex)
+    print("Not saved yet (File > Save once): %s" % ex)
 
-print("All done.")
+print("ALL DONE.")
