@@ -65,8 +65,9 @@ For both the **Front Bumper** and **Side Bumper** Mechanical models, the script:
 - ✅ Applies a **3 mm global mesh**
 - ✅ Generates the mesh
 
-Finally, the script saves the completed Workbench project.
+Finally, the script saves the Workbench project. The last thing that needs to be done manually in ANSYS Mechanical is select the mesh based on specific courseness. 
+
+<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/f8c512ca-f5ba-4ece-8508-d0841f29193a" />
+
 
 ---
-
-After the script finishes, the project is fully prepared for composite layup in ACP and structural analysis of the bumper models, eliminating nearly all repetitive setup steps. Next steps to work on, update ACP model, try to work on automating meshing for ACP part. 
