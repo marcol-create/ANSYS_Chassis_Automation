@@ -1,6 +1,6 @@
-# ANSYS GUI Semi-Automation Scripts
+# ANSYS GUI Automation Scripts
 
-Python scripts that semi-automates the setup of composite and bumper analyses for the **Stanford Solar Car – Sunstruck chassis** within **ANSYS Workbench**.
+Python scripts that automate the setup of composite and bumper analyses for the **Stanford Solar Car – Sunstruck chassis** within **ANSYS Workbench**.
 
 ---
 
@@ -8,68 +8,85 @@ Python scripts that semi-automates the setup of composite and bumper analyses fo
 
 ### 1. Prepare Geometry
 
-Create three separate STEP files:
+Create the required STEP files.
+
+### Option A — ACP Only
+
+Required geometry:
+
+- 📦 Chassis panels
+
+Run:
+
+```text
+just_acp.py
+```
+
+When prompted, select the **chassis panels STEP file**.
+
+The script will automatically:
+
+- ✅ Create an **ACP (Pre)** system
+- ✅ Import the Carbon Fiber and Aluminum Honeycomb material data
+- ✅ Import the chassis geometry
+- ✅ Open the ACP model in **ANSYS Mechanical**
+- ✅ Assign a **1 mm thickness** to every chassis panel
+- ✅ Create **Named Selections** for every body
+- ✅ Create **Named Selections** for every grouped face imported from the STEP file
+- ✅ Save the completed Workbench project
+
+---
+
+### Option B — ACP + Bumpers
+
+Required geometry:
 
 - 📦 Chassis panels
 - 🚗 Front bumper
 - 🚗 Side bumper
 
----
-
-### 2. Run the Automation Script
-
-First, downlowd all .py files from this repo. 
-
-In **ANSYS Workbench**, navigate to:
+Run:
 
 ```text
-File → Scripting → Run Script File
+bumpers_include.py
 ```
 
-Select:
-
-```text
-workbench_setup.py
-```
-
-When prompted, select the following files in order:
+When prompted, select the files in the following order:
 
 1. Chassis panels STEP file
 2. Front bumper STEP file
 3. Side bumper STEP file
 
+The script will automatically:
+
+#### ACP Setup
+
+- ✅ Create an **ACP (Pre)** system
+- ✅ Import the Carbon Fiber and Aluminum Honeycomb material data
+- ✅ Import the chassis geometry
+- ✅ Open the ACP model in **ANSYS Mechanical**
+- ✅ Assign a **1 mm thickness** to every chassis panel
+- ✅ Create **Named Selections** for every body
+- ✅ Create **Named Selections** for every grouped face imported from the STEP file
+
+#### Bumper Setup
+
+- ✅ Create **Front Bumper** and **Side Bumper** Mechanical systems
+- ✅ Import both bumper geometries
+- ✅ Assign a **1 mm thickness** to all surface bodies
+- ✅ Apply a **3 mm global mesh**
+- ✅ Generate the mesh
+- ✅ Create **Static Structural** analyses
+- ✅ Create **Structural Optimization** analyses
+- ✅ Link all required systems automatically
+
+Finally, the script saves the completed Workbench project.
+
 ---
 
-## What the Script Does
+## Which Script Should I Use?
 
-The script automatically:
-
-### Workbench Setup
-
-- ✅ Creates an **ACP (Pre)** system
-- ✅ Creates two **Mechanical** systems (Front Bumper and Side Bumper)
-- ✅ Orders all systems appropriately
-- ✅ Imports the **Carbon Fiber** and **Aluminum Honeycomb** material data
-- ✅ Imports each selected geometry into its corresponding system
-
-### Chassis (ACP) Preparation
-
-- ✅ Opens the ACP model in **ANSYS Mechanical**
-- ✅ Assigns a **1 mm thickness** to every chassis panel
-- ✅ Creates **Named Selections** for every body
-- ✅ Creates **Named Selections** for every grouped face imported from the STEP file
-
-### Bumper Preparation
-
-For both the **Front Bumper** and **Side Bumper** Mechanical models, the script:
-
-- ✅ Assigns a **1 mm thickness** to all surface bodies
-- ✅ Applies a **3 mm global mesh**
-- ✅ Generates the mesh
-
-
-
-<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/f8c512ca-f5ba-4ece-8508-d0841f29193a" />
-
-Finally, the script saves the Workbench project. The last thing that needs to be done manually in ANSYS Mechanical is to select the "panels only" mesh based on specific courseness. 
----
+| If you want to... | Run |
+|-------------------|-----|
+| Set up only the composite chassis model in ACP | `just_acp.py` |
+| Set up the complete chassis + bumper workflow (including Static Structural and Structural Optimization analyses) | `bumpers_include.py` |
