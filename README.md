@@ -34,7 +34,7 @@ The script will automatically:
 
 - ✅ Create an **ACP (Pre)** system
 - ✅ Create two **Mechanical** systems
-- ✅ Link the systems appropriately
+- ✅ Orders the systems appropriately
 - ✅ Import the **Carbon Fiber** and **Aluminum Honeycomb** material data
 
 ---
