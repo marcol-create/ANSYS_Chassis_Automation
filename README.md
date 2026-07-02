@@ -84,5 +84,5 @@ Finally, the script saves the completed Workbench project.
 
 ---
 
-> **Note:** Panel meshing is left to the user. After the script completes, open the ACP model and generate the chassis mesh using the element size/coarseness appropriate for your analysis.
+🔵 **Panel Meshing:** After the script completes, open the ACP model and generate the chassis mesh using the element size/coarseness appropriate for your analysis.
 
