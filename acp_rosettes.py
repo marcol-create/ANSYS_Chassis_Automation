@@ -1,19 +1,16 @@
 # =====================================================================
-#  ACP (Pre) -- one rosette per element set, at the set's centroid
+#  ACP (Pre) -- one rosette per element set, at the set's own centroid
 # =====================================================================
 #  Runs INSIDE ACP (File > Run Script, or from Workbench via RunScript).
 #  Run AFTER the mesh + element sets exist.
 #
 #  For every element set it creates a rosette of the same name, placed
-#  at the average of that set's element centroids. Axis directions are
-#  left at defaults (X/Y) for you to set manually later.
+#  at the average of THAT set's element centroids (scoped via a temporary
+#  selection). Axis directions stay at defaults (X/Y) for manual entry.
 # =====================================================================
 
 # Element sets to skip (e.g. the whole-model set).
 SKIP_SETS = ["All_Elements"]
-
-# mesh_query names to try for element-centroid coordinates (first that works wins).
-COORD_NAMES = ["coordinates", "centroids", "coordinate"]
 
 # ---- get the open ACP model ----
 try:
@@ -25,8 +22,7 @@ model = db.active_model
 
 
 def _avg(arr):
-    """Average a sequence of coords -> (x,y,z). Handles list-of-(x,y,z)
-    or a flat [x,y,z,x,y,z,...] layout."""
+    """Average a sequence of (x,y,z) coords -> (x,y,z)."""
     flat = list(arr)
     if not flat:
         return None
@@ -35,26 +31,24 @@ def _avg(arr):
         return (sum(p[0] for p in flat) / n,
                 sum(p[1] for p in flat) / n,
                 sum(p[2] for p in flat) / n)
-    xs, ys, zs = flat[0::3], flat[1::3], flat[2::3]  # [x,y,z,x,y,z,...]
+    xs, ys, zs = flat[0::3], flat[1::3], flat[2::3]  # flat [x,y,z,x,y,z,...]
     n = len(xs)
     return (sum(xs) / n, sum(ys) / n, sum(zs) / n)
 
 
 def set_center(es):
-    """Centroid of an element set, or None if coords can't be read."""
-    for qname in COORD_NAMES:
-        try:
-            data = model.mesh_query(name=qname, position="centroid",
-                                    selection="all", entities=[es])
-            # mesh_query with entities= returns one array per entity
-            arr = data[0] if (len(data) and hasattr(data[0], "__len__")) else data
-            c = _avg(arr)
-            if c is not None:
-                return c
-        except Exception as ex:
-            last = ex
-    print("  (centroid unavailable: %s)" % last)
-    return None
+    """Centroid of one element set: select its elements, then average
+    their centroid coordinates. Returns None if it can't be read."""
+    try:
+        # scope a temporary selection to just this element set...
+        model.select_elements(selection="sel0", op="new", attached_to=[es])
+        # ...and read the element-centroid coordinates of that selection
+        coords = model.mesh_query(name="coordinates", position="centroid",
+                                  selection="sel0")
+        return _avg(coords)
+    except Exception as ex:
+        print("  (centroid unavailable: %s)" % ex)
+        return None
 
 
 # ---- create one rosette per element set ----
