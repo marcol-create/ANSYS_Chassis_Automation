@@ -16,15 +16,25 @@ Create three separate STEP files:
 
 ---
 
-### 2. Create Workbench Project
+### 2. Create the Workbench Project
 
-Create the following systems:
+In **ANSYS Workbench**, navigate to:
 
-| System | Geometry |
-|--------|----------|
-| ACP (Pre) | Chassis panels |
-| Mechanical | Front bumper |
-| Mechanical | Side bumper |
+```text
+File → Scripting → Run Script File
+```
+
+Select:
+
+```text
+workbench_schematic.py
+```
+
+The script will automatically:
+
+- Create an **ACP (Pre)** system
+- Create two **Mechanical** systems
+- Link the systems appropriately for the simulation workflow
 
 ---
 
@@ -48,18 +58,18 @@ Import the bumper geometries:
 
 ---
 
-## Running the Automation Script
+## Running the Mechanical Automation Script
 
 1. Open the **ACP** model (this launches **ANSYS Mechanical**).
 2. In Mechanical, navigate to:
 
-```
+```text
 Automation → Run Macro
 ```
 
 3. Select:
 
-```
+```text
 mechanical_setup_gui.py
 ```
 
@@ -74,9 +84,3 @@ The script automatically:
 - ✅ Creates **Named Selections** for every grouped face imported from the STEP file
 
 This eliminates the repetitive manual setup required before composite layup and structural analysis.
-
-
-
-
-
-
