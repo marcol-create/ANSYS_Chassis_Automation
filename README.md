@@ -50,6 +50,9 @@ The script automatically:
 - ✅ Creates **Named Selections** for every grouped face imported from the STEP file
 - ✅ Saves the completed Workbench project
 
+ <img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/a87d7abc-8d2d-4584-ae0f-30466b344d52" />
+
+
 ---
 
 ## Option B — ACP + Bumpers
