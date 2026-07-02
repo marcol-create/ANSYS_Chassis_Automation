@@ -221,12 +221,6 @@ The script automatically:
 
 ---
 
-## Panel Meshing
-
-🔵 **Panel Meshing:** The chassis panel mesh is intentionally left to the user. Before running the ACP scripts, generate the chassis mesh using the element size/coarseness appropriate for your analysis.
-
----
-
 ## Important Notes
 
 - Both `acp_full_setup.py` and `acp_solid_models.py` are designed to build the ACP model from scratch. Run each script **once** on a clean ACP model.
