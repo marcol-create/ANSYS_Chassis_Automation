@@ -184,6 +184,12 @@ Carbon Fiber (90°)
 - ✅ Creates a **Modeling Group** for every element set
 - ✅ Assigns one **Full Panel** ply to each Modeling Group
 
+
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/abc9b72f-aae5-4aea-8dd8-40fdcc13c599" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/ee2066ea-8e73-4585-8f7d-65701656dd91" />
+
+
+
 ---
 
 ## Step 3 — Review Composite Orientations
