@@ -34,7 +34,7 @@ The script will automatically:
 
 - ✅ Create an **ACP (Pre)** system
 - ✅ Create two **Mechanical** systems
-- ✅ Orders the systems appropriately
+- ✅ Link the systems appropriately
 - ✅ Import the **Carbon Fiber** and **Aluminum Honeycomb** material data
 
 ---
@@ -46,6 +46,33 @@ Import the geometry files:
 - **ACP (Pre)** → Chassis panels STEP file
 - **Mechanical Model 1** → Side bumper STEP file
 - **Mechanical Model 2** → Front bumper STEP file
+
+---
+
+### 4. Automatically Mesh the Bumpers
+
+Back in **ANSYS Workbench**, navigate to:
+
+```text
+File → Scripting → Run Script File
+```
+
+Select:
+
+```text
+workbench_mesh_bumpers.py
+```
+
+The script will automatically:
+
+- ✅ Open both **Front Bumper** and **Side Bumper** Mechanical models
+- ✅ Assign a **1 mm thickness** to all surface bodies
+- ✅ Apply a **3 mm global mesh**
+- ✅ Generate the mesh
+- ✅ Close Mechanical after meshing
+- ✅ Save the Workbench project
+
+> **Note:** This script performs the complete bumper meshing workflow directly from the Workbench Project window, so you never need to open Mechanical manually for the bumper analyses.
 
 ---
 
@@ -66,11 +93,11 @@ mechanical_setup_gui.py
 
 ---
 
-## What the Script Does
+## What the Mechanical Script Does
 
 The script automatically:
 
-- ✅ Assigns a **1 mm thickness** to every geometry
+- ✅ Assigns a **1 mm thickness** to every chassis panel
 - ✅ Creates **Named Selections** for every body
 - ✅ Creates **Named Selections** for every grouped face imported from the STEP file
 
