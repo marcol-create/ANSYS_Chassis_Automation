@@ -4,17 +4,32 @@ Python scripts that automate the setup of composite and bumper analyses for the 
 
 ---
 
-## Setup
+## Included Scripts
 
-### 1. Prepare Geometry
+| Script | Purpose |
+|---------|---------|
+| `workbench_setup(just_acp).py` | Creates an ACP Workbench project, imports the chassis geometry, imports material data, and prepares the model for composite layup. |
+| `workbench_setup(bumpers_included).py` | Creates the complete Workbench project, including ACP, Front Bumper, and Side Bumper systems, imports all geometry, meshes the bumper models, and creates the Static Structural and Structural Optimization analyses. |
+| `acp_full_setup.py` | Automatically creates the composite layup by generating fabrics, stackups, rosettes, oriented selection sets, modeling groups, and plies for every element set. |
+| `acp_solid_models.py` | Generates ACP solid models for every element set using **Analysis Ply Wise** extrusion. |
 
-Create the required STEP files.
+---
 
-### Option A — ACP Only (Most General Case)
+# Setup
 
-Required geometry:
+## Option A — ACP Only
 
-- 📦 Chassis panels
+### Required Geometry
+
+- 📦 Chassis panels STEP file
+
+### Step 1 — Run the Workbench Setup Script
+
+In **ANSYS Workbench**, navigate to:
+
+```text
+File → Scripting → Run Script File
+```
 
 Run:
 
@@ -24,31 +39,39 @@ workbench_setup(just_acp).py
 
 When prompted, select the **chassis panels STEP file**.
 
-The script will automatically:
+The script automatically:
 
-- ✅ Create an **ACP (Pre)** system
-- ✅ Import the Carbon Fiber and Aluminum Honeycomb material data
-- ✅ Import the chassis geometry
-- ✅ Open the ACP model in **ANSYS Mechanical**
-- ✅ Assign a **1 mm thickness** to every chassis panel
-- ✅ Create **Named Selections** for every body
-- ✅ Create **Named Selections** for every grouped face imported from the STEP file
-- ✅ Save the completed Workbench project
+- ✅ Creates an **ACP (Pre)** system
+- ✅ Imports the **Carbon Fiber** and **Aluminum Honeycomb** material data
+- ✅ Imports the chassis geometry
+- ✅ Opens ACP Mechanical
+- ✅ Assigns a **1 mm thickness** to every chassis panel
+- ✅ Creates **Named Selections** for every body
+- ✅ Creates **Named Selections** for every grouped face imported from the STEP file
+- ✅ Saves the completed Workbench project
 
 ---
 
-### Option B — ACP + Bumpers
+## Option B — ACP + Bumpers
 
-Required geometry:
+### Required Geometry
 
-- 📦 Chassis panels
-- 🚗 Front bumper
-- 🚗 Side bumper
+- 📦 Chassis panels STEP file
+- 🚗 Front bumper STEP file
+- 🚗 Side bumper STEP file
+
+### Step 1 — Run the Workbench Setup Script
+
+In **ANSYS Workbench**, navigate to:
+
+```text
+File → Scripting → Run Script File
+```
 
 Run:
 
 ```text
-bumpers_include.py
+workbench_setup(bumpers_included).py
 ```
 
 When prompted, select the files in the following order:
@@ -57,32 +80,128 @@ When prompted, select the files in the following order:
 2. Front bumper STEP file
 3. Side bumper STEP file
 
-The script will automatically:
+The script automatically:
 
-#### ACP Setup
+### ACP Setup
 
-- ✅ Create an **ACP (Pre)** system
-- ✅ Import the Carbon Fiber and Aluminum Honeycomb material data
-- ✅ Import the chassis geometry
-- ✅ Open the ACP model in **ANSYS Mechanical**
-- ✅ Assign a **1 mm thickness** to every chassis panel
-- ✅ Create **Named Selections** for every body
-- ✅ Create **Named Selections** for every grouped face imported from the STEP file
+- ✅ Creates an **ACP (Pre)** system
+- ✅ Imports the **Carbon Fiber** and **Aluminum Honeycomb** material data
+- ✅ Imports the chassis geometry
+- ✅ Opens ACP Mechanical
+- ✅ Assigns a **1 mm thickness** to every chassis panel
+- ✅ Creates **Named Selections** for every body
+- ✅ Creates **Named Selections** for every grouped face imported from the STEP file
 
-#### Bumper Setup
+### Bumper Setup
 
-- ✅ Create **Front Bumper** and **Side Bumper** Mechanical systems
-- ✅ Import both bumper geometries
-- ✅ Assign a **1 mm thickness** to all surface bodies
-- ✅ Apply a **3 mm global mesh**
-- ✅ Generate the mesh
-- ✅ Create **Static Structural** analyses
-- ✅ Create **Structural Optimization** analyses
-- ✅ Link all required systems automatically
-
-Finally, the script saves the completed Workbench project.
+- ✅ Creates **Front Bumper** and **Side Bumper** Mechanical systems
+- ✅ Imports both bumper geometries
+- ✅ Assigns a **1 mm thickness** to all surface bodies
+- ✅ Applies a **3 mm global mesh**
+- ✅ Generates the mesh
+- ✅ Creates **Static Structural** analyses
+- ✅ Creates **Structural Optimization** analyses
+- ✅ Links all required systems automatically
+- ✅ Saves the completed Workbench project
 
 ---
 
-🔵 **Panel Meshing:** After the script completes, open the ACP model and generate the chassis mesh using the element size/coarseness appropriate for your analysis.
+# ACP Setup
 
+After the Workbench setup script has finished, the ACP model will contain:
+
+- ✅ Imported materials
+- ✅ Imported geometry
+- ✅ Mesh
+- ✅ Element Sets
+
+Open the ACP model to continue.
+
+---
+
+## Step 2 — Build the Composite Layup
+
+In **ACP**, navigate to:
+
+```text
+File → Run Script
+```
+
+Run:
+
+```text
+acp_full_setup.py
+```
+
+The script automatically:
+
+- ✅ Detects the imported **Carbon Fiber** and **Aluminum Honeycomb** materials
+- ✅ Creates the **Carbon Fiber** and **Honeycomb** fabrics
+- ✅ Creates the **Full Panel** stackup:
+
+```text
+Carbon Fiber (0°)
+Carbon Fiber (90°)
+Aluminum Honeycomb (0°)
+Carbon Fiber (0°)
+Carbon Fiber (90°)
+```
+
+- ✅ Creates a centroid-based **Rosette** for every element set
+- ✅ Creates an **Oriented Selection Set (OSS)** for every element set
+- ✅ Links each OSS to its corresponding Rosette
+- ✅ Creates a **Modeling Group** for every element set
+- ✅ Assigns one **Full Panel** ply to each Modeling Group
+
+---
+
+## Step 3 — Review Composite Orientations
+
+Before generating solid models, manually review each:
+
+- Rosette
+- Oriented Selection Set (OSS)
+
+Update any orientation-specific settings, including:
+
+- Fiber / lay-up direction
+- Rosette axis directions
+- Ply flipping
+- Draping direction
+- Any face-specific orientation adjustments
+
+---
+
+## Step 4 — Generate ACP Solid Models
+
+After all orientations have been finalized, in **ACP** navigate to:
+
+```text
+File → Run Script
+```
+
+Run:
+
+```text
+acp_solid_models.py
+```
+
+The script automatically:
+
+- ✅ Creates one solid model for every element set
+- ✅ Assigns each solid model to its corresponding **Extrusion Element Set**
+- ✅ Configures **Analysis Ply Wise** extrusion for every solid model
+
+---
+
+## Panel Meshing
+
+🔵 **Panel Meshing:** The chassis panel mesh is intentionally left to the user. Before running the ACP scripts, generate the chassis mesh using the element size/coarseness appropriate for your analysis.
+
+---
+
+## Important Notes
+
+- Both `acp_full_setup.py` and `acp_solid_models.py` are designed to build the ACP model from scratch. Run each script **once** on a clean ACP model.
+- The bumper meshes are generated automatically by `workbench_setup(bumpers_included).py`.
+- The chassis panel mesh must be generated manually and should be chosen based on the desired analysis accuracy.
