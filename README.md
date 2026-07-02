@@ -10,7 +10,7 @@ Python scripts that automate the setup of composite and bumper analyses for the 
 
 Create the required STEP files.
 
-### Option A — ACP Only
+### Option A — ACP Only (Most General Case)
 
 Required geometry:
 
