@@ -32,27 +32,18 @@ workbench_schematic.py
 
 The script will automatically:
 
-- Create an **ACP (Pre)** system
-- Create two **Mechanical** systems
-- Link the systems appropriately for the simulation workflow
+- ✅ Create an **ACP (Pre)** system
+- ✅ Create two **Mechanical** systems
+- ✅ Link the systems appropriately
+- ✅ Import the **Carbon Fiber** and **Aluminum Honeycomb** material data
 
 ---
 
-### 3. Configure ACP
+### 3. Configure Geometry
 
-Inside the **ACP** system:
+Import the geometry files:
 
-1. Import the material data:
-   - Carbon Fiber
-   - Aluminum Honeycomb
-2. Import the **chassis panels STEP file**.
-
----
-
-### 4. Configure Mechanical Models
-
-Import the bumper geometries:
-
+- **ACP (Pre)** → Chassis panels STEP file
 - **Mechanical Model 1** → Side bumper STEP file
 - **Mechanical Model 2** → Front bumper STEP file
 
