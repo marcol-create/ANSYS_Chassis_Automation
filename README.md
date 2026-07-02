@@ -71,6 +71,5 @@ For both the **Front Bumper** and **Side Bumper** Mechanical models, the script:
 
 <img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/f8c512ca-f5ba-4ece-8508-d0841f29193a" />
 
-
 Finally, the script saves the Workbench project. The last thing that needs to be done manually in ANSYS Mechanical is select the mesh based on specific courseness. 
 ---
