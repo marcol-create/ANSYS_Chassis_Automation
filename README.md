@@ -1,6 +1,6 @@
-# ANSYS GUI Automation (Semi) Scripts
+# ANSYS GUI Semi-Automation Scripts
 
-Python scripts that selectively automates the setup of composite and bumper analyses for the **Stanford Solar Car – Sunstruck chassis** within **ANSYS Workbench**.
+Python scripts that semi-automates the setup of composite and bumper analyses for the **Stanford Solar Car – Sunstruck chassis** within **ANSYS Workbench**.
 
 ---
 
