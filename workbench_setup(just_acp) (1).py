@@ -6,10 +6,12 @@
 #
 #  Builds an ACP-only project ready for composite layup:
 #    1. Creates an ACP (Pre) system titled "Panels"
-#    2. Imports material data (files named *Al_HC* / *CF_Limits*) into
-#       its Engineering Data
+#    2. Imports material data (files named *Al_HC* / *CF_Limits*)
 #    3. Prompts for the chassis STEP file and attaches it to Geometry
-#    4. Refreshes the model so it's ready to mesh + lay up
+#    4. Opens Mechanical and, on the chassis:
+#         - sets 1 mm thickness on every (surface) body
+#         - creates one Named Selection per body (all faces, prefix stripped)
+#    5. Saves
 #
 #  (No bumpers, no Static Structural, no Structural Optimization.)
 # =====================================================================
@@ -17,11 +19,14 @@
 import os
 
 # ---------------- CONFIG ----------------
-MATERIAL_NAME_KEYS = ["Al_HC", "CF_Limits"]     # material files to import (name contains)
+MATERIAL_NAME_KEYS = ["Al_HC", "CF_Limits"]
 MATERIAL_EXTS = (".xml", ".engd", ".eng")
-SEARCH_ROOTS = [os.path.expanduser("~")]        # where to look for material files
-CHASSIS_LABEL = "Chassis panels"                # shown in the file picker
-CHASSIS_FALLBACK = ""                           # optional hard path if the dialog misbehaves
+SEARCH_ROOTS = [os.path.expanduser("~")]
+CHASSIS_LABEL = "Chassis panels"
+CHASSIS_FALLBACK = ""                            # optional hard path if the dialog misbehaves
+
+# How to open Mechanical: "" (visible, most reliable) / "Interactive" / "Hidden"
+EDIT_MODE = "Interactive"
 
 SKIP_DIRS = set([
     "appdata", "$recycle.bin", "windows", "program files", "program files (x86)",
@@ -29,6 +34,36 @@ SKIP_DIRS = set([
     "application data", "local settings", "my documents", "cookies",
     "nethood", "printhood", "recent", "sendto", "start menu", "templates",
 ])
+
+# ---------------- Mechanical-side script (thickness + named selections) ----------------
+CHASSIS_CMD = '''
+THICKNESS = Quantity("1 [mm]")
+NAME_DELIMITER = "|"
+
+def clean_name(raw):
+    if NAME_DELIMITER and NAME_DELIMITER in raw:
+        return raw.rsplit(NAME_DELIMITER, 1)[-1].strip()
+    return raw.strip()
+
+model  = ExtAPI.DataModel.Project.Model
+bodies = model.GetChildren(DataModelObjectCategory.Body, True)
+with Transaction():
+    for body in bodies:
+        try:
+            body.Thickness = THICKNESS
+        except Exception:
+            pass
+with Transaction():
+    for body in bodies:
+        face_ids = [face.Id for face in body.GetGeoBody().Faces]
+        if not face_ids:
+            continue
+        sel = ExtAPI.SelectionManager.CreateSelectionInfo(SelectionTypeEnum.GeometryEntities)
+        sel.Ids = face_ids
+        ns = model.AddNamedSelection()
+        ns.Location = sel
+        ns.Name = clean_name(body.Name)
+'''
 
 
 # ---------------- HELPERS ----------------
@@ -81,7 +116,7 @@ def pick_step_file(label):
             if dlg.ShowDialog() == DialogResult.OK:
                 holder["path"] = dlg.FileName
 
-        t = Thread(ThreadStart(_show))       # WinForms dialog needs an STA thread
+        t = Thread(ThreadStart(_show))
         t.SetApartmentState(ApartmentState.STA)
         t.Start()
         t.Join()
@@ -89,6 +124,15 @@ def pick_step_file(label):
     except Exception as ex:
         print("  (file dialog unavailable: %s)" % ex)
         return None
+
+
+def open_model(model):
+    if EDIT_MODE == "Interactive":
+        model.Edit(Interactive=False)
+    elif EDIT_MODE == "Hidden":
+        model.Edit(Hidden=True)
+    else:
+        model.Edit()
 
 
 # =====================================================================
@@ -119,27 +163,37 @@ except Exception as ex:
 # =====================================================================
 # 3. Import the chassis geometry (file picker)
 # =====================================================================
+have_geometry = False
 try:
     path = pick_step_file(CHASSIS_LABEL) or CHASSIS_FALLBACK
     if path:
         geom = sysA.GetContainer(ComponentName="Geometry")
         geom.SetFile(FilePath=path.replace("\\", "/"))
+        have_geometry = True
         print("Chassis geometry set: %s" % path)
     else:
-        print("No chassis file chosen - geometry left empty.")
+        print("No chassis file chosen - geometry left empty; skipping Mechanical setup.")
 except Exception as ex:
     print("Geometry import error: %s" % ex)
 
 # =====================================================================
-# 4. Refresh so the model is ready for meshing + layup
+# 4. Mechanical setup on the chassis: thickness + named selections
 # =====================================================================
-try:
-    comp = sysA.GetComponent(Name="Model")
-    comp.Refresh()
-    print("Model refreshed.")
-except Exception as ex:
-    print("Refresh note: %s" % ex)
+if have_geometry:
+    try:
+        comp = sysA.GetComponent(Name="Model")
+        comp.Refresh()
+        model = sysA.GetContainer(ComponentName="Model")
+        open_model(model)
+        model.SendCommand(Language="Python", Command=CHASSIS_CMD)
+        model.Exit()
+        print("Mechanical setup done: thickness + named selections.")
+    except Exception as ex:
+        print("Mechanical setup error: %s" % ex)
 
+# =====================================================================
+# 5. Save
+# =====================================================================
 try:
     Save(Overwrite=True)
     print("Project saved.")
