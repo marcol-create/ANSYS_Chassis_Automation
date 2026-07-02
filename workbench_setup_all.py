@@ -92,13 +92,26 @@ def pick_step_file(label):
         import clr
         clr.AddReference("System.Windows.Forms")
         from System.Windows.Forms import OpenFileDialog, DialogResult
-        dlg = OpenFileDialog()
-        dlg.Title = "Select STEP file for: %s" % label
-        dlg.Filter = "STEP files (*.step;*.stp)|*.step;*.stp|All files (*.*)|*.*"
-        dlg.Multiselect = False
-        if dlg.ShowDialog() == DialogResult.OK:
-            return dlg.FileName
-        return None
+        from System.Threading import Thread, ThreadStart, ApartmentState
+
+        holder = {"path": None}
+
+        def _show():
+            dlg = OpenFileDialog()
+            dlg.Title = "Select STEP file for: %s" % label
+            dlg.Filter = "STEP files (*.step;*.stp)|*.step;*.stp|All files (*.*)|*.*"
+            dlg.Multiselect = False
+            dlg.RestoreDirectory = True
+            if dlg.ShowDialog() == DialogResult.OK:
+                holder["path"] = dlg.FileName
+
+        # WinForms dialogs must run on an STA thread; the Workbench script
+        # runner is not STA, so run the dialog on its own STA thread.
+        t = Thread(ThreadStart(_show))
+        t.SetApartmentState(ApartmentState.STA)
+        t.Start()
+        t.Join()
+        return holder["path"]
     except Exception, ex:
         print("  (file dialog unavailable: %s)" % ex)
         return None
