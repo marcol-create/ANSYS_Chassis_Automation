@@ -79,6 +79,46 @@ def get_item(collection, name):
         return None
 
 
+def _cross(a, b):
+    return (a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0])
+
+
+def _unit(v):
+    import math
+    m = math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
+    return None if m < 1e-9 else (v[0] / m, v[1] / m, v[2] / m)
+
+
+def rosette_normal(ros):
+    """Normal (3rd axis) of a rosette, so the OSS orientation follows the
+    rosette the user set. Tries a direct normal attr, else crosses the two
+    in-plane direction vectors. Returns unit (x,y,z) or None."""
+    if ros is None:
+        return None
+    # (a) a direct normal / 3rd-direction attribute
+    for a in ["normal", "dir3", "dir_3", "direction_3", "z_direction", "n"]:
+        try:
+            u = _unit(tuple(getattr(ros, a)))
+            if u:
+                return u
+        except Exception:
+            pass
+    # (b) cross product of the two in-plane directions
+    for a1, a2 in [("dir1", "dir2"), ("dir_1", "dir_2"),
+                   ("direction_1", "direction_2"), ("x_direction", "y_direction")]:
+        try:
+            d1 = tuple(getattr(ros, a1))
+            d2 = tuple(getattr(ros, a2))
+            u = _unit(_cross(d1, d2))
+            if u:
+                return u
+        except Exception:
+            pass
+    return None
+
+
 def target_sets():
     return [n for n in model.element_sets.keys() if n not in SKIP_SETS]
 
@@ -93,11 +133,29 @@ if full is None:
 # =====================================================================
 # 4. ORIENTED SELECTION SETS
 # =====================================================================
+# ---- one-time: show the first rosette's attributes (helps if source=mesh) ----
+_rk = list(model.rosettes.keys())
+for _n in _rk:
+    if _n not in SKIP_SETS and _n.lower() != "global coordinate system":
+        print("Rosette '%s' attrs: %s"
+              % (_n, ", ".join(a for a in dir(model.rosettes[_n]) if not a.startswith("_"))))
+        break
+
 for name in target_sets():
     es  = model.element_sets[name]
     ros = get_item(model.rosettes, name)
     origin = set_center(es) or (0.0, 0.0, 0.0)
-    orient_dir = set_normal(es) or DEFAULT_ORIENT_DIR   # face normal, not a fixed guess
+
+    # OSS orientation should follow the rosette the user set; fall back to the
+    # face's mesh normal, then to the fixed default.
+    orient_dir = rosette_normal(ros)
+    src = "rosette"
+    if orient_dir is None:
+        orient_dir = set_normal(es)
+        src = "mesh"
+    if orient_dir is None:
+        orient_dir = DEFAULT_ORIENT_DIR
+        src = "default"
 
     kwargs = dict(name=name, orientation_point=origin,
                   orientation_direction=orient_dir, element_sets=[es])
@@ -117,8 +175,8 @@ for name in target_sets():
             try: oss.add_rosette(ros)
             except Exception as ex: print("  add_rosette failed '%s': %s" % (name, ex))
     tag = "" if ros is not None else "  (NO rosette)"
-    print("OSS '%s'  orient_dir=(%.2f, %.2f, %.2f)%s"
-          % (name, orient_dir[0], orient_dir[1], orient_dir[2], tag))
+    print("OSS '%s'  orient_dir=(%.2f, %.2f, %.2f) [%s]%s"
+          % (name, orient_dir[0], orient_dir[1], orient_dir[2], src, tag))
 
 # =====================================================================
 # 5. MODELING GROUPS + PLIES
