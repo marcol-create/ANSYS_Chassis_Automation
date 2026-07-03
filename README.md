@@ -17,14 +17,26 @@ Python scripts that automates repetitive parts of setup for composite and bumper
 
 # Quick Workflow
 
-1. Run either `workbench_setup(just_acp).py` or `workbench_setup(bumpers_included).py`.
-2. Generate the chassis mesh in ACP Mechanical.
-3. Run `acp_materials_rosettes.py`.
-4. Adjust the rosette directions.
-5. Run `acp_oss_plies_solids.py`.
-6. Apply any draping specifications needed. 
-7. Update ACP and return to Workbench.
+1. **Run a Workbench setup script**
+   - Run either `workbench_setup(just_acp).py` or `workbench_setup(bumpers_included).py`.
+   - The script creates the Workbench project, imports the geometry and material data, generates the required Named Selections, and (if using the bumper workflow) automatically meshes the bumper models and creates the Static Structural and Structural Optimization analyses.
 
+2. **Generate the chassis mesh**
+   - Open the ACP Mechanical model and create the chassis mesh using the element sizing and selective refinement appropriate for your analysis.
+
+3. **Create the composite model**
+   - Run `acp_materials_rosettes.py`.
+   - The script creates the Carbon Fiber and Honeycomb fabrics, the **Full Panel** stackup, and one rosette for every element set.
+
+4. **Finalize the rosette orientations**
+   - **Manual step:** Review each rosette and adjust its direction and flip to match the desired fiber/offset direction for each panel.
+
+5. **Generate the ACP model**
+   - Run `acp_oss_plies_solids.py`.
+   - The script creates the Oriented Selection Sets (OSSs), Modeling Groups, Full Panel plies, and Solid Models for every element set, automatically linking everything by name.
+
+6. **Update ACP**
+   - Update the ACP model, then return to Workbench to continue with your composite or structural analyses.
 ---
 
 # 1. Workbench Setup
