@@ -10,7 +10,7 @@ Python scripts that automates repetitive parts of setup for composite and bumper
 |---------|---------|
 | `workbench_setup(just_acp).py` | Creates an ACP-only Workbench project, imports the chassis geometry (prompts) and material data from your computer (automatically finds), and performs the Mechanical setup (thickness + named selections). |
 | `workbench_setup(bumpers_included).py` | Creates the complete Workbench project with ACP, Front Bumper, and Side Bumper systems, imports all geometry, meshes the bumper models, and creates the Static Structural and Structural Optimization analyses. |
-| `acp_materials_rosettes.py` | Creates the Carbon Fiber and Honeycomb fabrics, the **Full Panel** stackup, and one rosette for every element set. |
+| `acp_materials_rosettes.py` | Creates the Carbon Fiber and Honeycomb fabrics, the **Full Panel** stackup, and one rosette for every element set, automatically centered. |
 | `acp_oss_plies_solids.py` | Creates the oriented selection sets (OSSs), modeling groups, plies, and solid models from the finalized rosettes. |
 
 ---
