@@ -38,7 +38,7 @@ Prior to Ansys work, pre-prep file in Fusion, surface offsetting faces by 0.00 m
    - Assign draping as necessary.
 
 6. **Update ACP**
-   - Update the ACP model, then return to Workbench to continue with your composite or structural analyses.
+   - Update the ACP model, then return to Workbench to continue with structural analyses.
 
 ---
 
