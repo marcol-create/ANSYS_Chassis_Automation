@@ -1,6 +1,6 @@
 # ANSYS Chassis (semi) Automation Scripts
 
-Python scripts that partly automate the setup of composite and bumper analyses for the **Stanford Solar Car – Sunstruck chassis** within **ANSYS Workbench**.
+Python scripts topartly automate the setup of composite and bumper analyses for the Sunstruck chassis within ANSYS Workbench.
 
 ---
 
