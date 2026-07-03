@@ -54,6 +54,24 @@ def set_center(es):
         return None
 
 
+def set_normal(es):
+    """Average, normalized element normal of a set -> unit (x,y,z), or None."""
+    try:
+        import math
+        model.select_elements(selection="sel1", op="new", attached_to=[es])
+        norms = model.mesh_query(name="normals", position="centroid",
+                                 selection="sel1")
+        avg = _avg(norms)
+        if avg is None:
+            return None
+        mag = math.sqrt(avg[0] ** 2 + avg[1] ** 2 + avg[2] ** 2)
+        if mag < 1e-9:
+            return None
+        return (avg[0] / mag, avg[1] / mag, avg[2] / mag)
+    except Exception:
+        return None
+
+
 def get_item(collection, name):
     try:
         return collection[name]
@@ -79,9 +97,10 @@ for name in target_sets():
     es  = model.element_sets[name]
     ros = get_item(model.rosettes, name)
     origin = set_center(es) or (0.0, 0.0, 0.0)
+    orient_dir = set_normal(es) or DEFAULT_ORIENT_DIR   # face normal, not a fixed guess
 
     kwargs = dict(name=name, orientation_point=origin,
-                  orientation_direction=DEFAULT_ORIENT_DIR, element_sets=[es])
+                  orientation_direction=orient_dir, element_sets=[es])
     if ros is not None:
         kwargs["rosettes"] = [ros]
     try:
@@ -90,7 +109,7 @@ for name in target_sets():
         oss = model.create_oriented_selection_set(name=name)
         try: oss.orientation_point = origin
         except Exception: pass
-        try: oss.orientation_direction = DEFAULT_ORIENT_DIR
+        try: oss.orientation_direction = orient_dir
         except Exception: pass
         try: oss.add_element_set(es)
         except Exception as ex: print("  add_element_set failed '%s': %s" % (name, ex))
@@ -98,7 +117,8 @@ for name in target_sets():
             try: oss.add_rosette(ros)
             except Exception as ex: print("  add_rosette failed '%s': %s" % (name, ex))
     tag = "" if ros is not None else "  (NO rosette)"
-    print("OSS '%s'%s" % (name, tag))
+    print("OSS '%s'  orient_dir=(%.2f, %.2f, %.2f)%s"
+          % (name, orient_dir[0], orient_dir[1], orient_dir[2], tag))
 
 # =====================================================================
 # 5. MODELING GROUPS + PLIES
