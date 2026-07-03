@@ -1,6 +1,6 @@
 # ANSYS Chassis (Semi) Automation Scripts
 
-Python scripts that automate the repetitive setup of composite and bumper analyses for the **Sunstruck** chassis in **ANSYS Workbench** and **ACP**.
+Python scripts that automates repetitive parts of setup for composite and bumper analyses for **Sunstruck** chassis in **ANSYS Workbench** and **ACP**.
 
 ---
 
