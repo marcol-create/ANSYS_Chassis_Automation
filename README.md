@@ -48,8 +48,7 @@ Prior to Ansys work, pre-prep file in Fusion, surface offsetting faces by 0.00 m
 - Customizing rosette orientation (ACP)
 - Setting draping (ACP)
 
-
-  # More detailed steps
+# More detailed steps
 # 1. Workbench Setup
 
 ## Option A — ACP Only
