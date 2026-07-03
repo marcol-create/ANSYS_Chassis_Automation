@@ -207,11 +207,6 @@ The script automatically:
 
 **OSS orientation options** (top of `acp_oss_plies_solids.py`):
 
-| Setting | Effect |
-|---------|--------|
-| `ORIENT_MODE = "rosette"` | Orientation follows each rosette (default). Other modes: `"radial_out"`, `"radial_in"`, `"mesh"`, `"fixed"`. |
-| `ORIENT_FLIP = True` | Negates the direction so the solid extrudes inward (opposite the rosette/offset). Set `False` if it extrudes the wrong way. |
-| `EX_TYPE = "analysis_ply_wise"` | Solid-model extrusion method. `MONOLITHIC_SETS` can override specific sets to `monolithic`. |
 
 <img width="607" height="1075" alt="image" src="https://github.com/user-attachments/assets/fccf9a34-4582-4a3e-9a8b-fa1b4c5328a8" />
 
