@@ -255,9 +255,16 @@ The script creates:
 - ✅ **Analysis Ply Wise** extrusion
 - ✅ Links all ACP objects by matching names
 
-| OSS Orientation Options | ACP Objects |
-|:---:|:---:|
-| <img width="300" alt="OSS Orientation Options" src="https://github.com/user-attachments/assets/fccf9a34-4582-4a3e-9a8b-fa1b4c5328a8" /> | <img width="300" alt="ACP Objects" src="https://github.com/user-attachments/assets/4b692e55-4761-425c-a9fe-2e7063166209" /> |
+<table>
+  <tr>
+    <td align="center"><b>OSS Orientation Options</b></td>
+    <td align="center"><b>ACP Objects</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img height="460" alt="OSS Orientation Options" src="https://github.com/user-attachments/assets/fccf9a34-4582-4a3e-9a8b-fa1b4c5328a8" /></td>
+    <td align="center"><img height="460" alt="ACP Objects" src="https://github.com/user-attachments/assets/4b692e55-4761-425c-a9fe-2e7063166209" /></td>
+  </tr>
+</table>
 
 ### Final ACP Model
 
