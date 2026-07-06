@@ -56,14 +56,122 @@ def _avg(arr):
     return (sum(xs) / n, sum(ys) / n, sum(zs) / n)
 
 
+def _triples(arr):
+    """Normalize a coordinate result to a list of (x, y, z) tuples."""
+    flat = list(arr)
+    if not flat:
+        return []
+    if hasattr(flat[0], "__len__"):
+        return [(p[0], p[1], p[2]) for p in flat]
+    return [(flat[i], flat[i + 1], flat[i + 2]) for i in range(0, len(flat) - 2, 3)]
+
+
+# Snap the origin to the nearest element in the set so it always sits ON that
+# face (not floating off a curved/L-shaped face or drifting onto a neighbor).
+SNAP_TO_ELEMENT = True
+
+
 def set_center(es):
     try:
         model.select_elements(selection="sel0", op="new", attached_to=[es])
-        coords = model.mesh_query(name="coordinates", position="centroid",
-                                  selection="sel0")
-        return _avg(coords)
+        pts = _triples(model.mesh_query(name="coordinates", position="centroid",
+                                        selection="sel0"))
+        if not pts:
+            return None
+        n = len(pts)
+        c = (sum(p[0] for p in pts) / n,
+             sum(p[1] for p in pts) / n,
+             sum(p[2] for p in pts) / n)
+        if not SNAP_TO_ELEMENT:
+            return c
+        # nearest element centroid to the average -> guaranteed on this set
+        best, bestd = None, None
+        for p in pts:
+            d = (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2
+            if bestd is None or d < bestd:
+                bestd, best = d, p
+        return best
     except Exception:
         return None
+
+
+def _cross(a, b):
+    return (a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0])
+
+
+def _unit(v):
+    import math
+    m = math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
+    return None if m < 1e-9 else (v[0] / m, v[1] / m, v[2] / m)
+
+
+def rosette_axes(es):
+    """Compute (dir1, dir2) so the rosette normal (dir1 x dir2) is perpendicular
+    to the surface and dir1 runs along the surface's LONG side.
+    Returns (None, None) if it can't be determined (caller falls back)."""
+    try:
+        import math
+        model.select_elements(selection="sel0", op="new", attached_to=[es])
+        pts = _triples(model.mesh_query(name="coordinates", position="centroid",
+                                        selection="sel0"))
+        norms = _triples(model.mesh_query(name="normals", position="centroid",
+                                          selection="sel0"))
+        if len(pts) < 3 or not norms:
+            return None, None
+
+        # surface normal = averaged element normal
+        N = _unit((sum(n[0] for n in norms),
+                   sum(n[1] for n in norms),
+                   sum(n[2] for n in norms)))
+        if N is None:
+            return None, None
+
+        # centroid of the points
+        m = len(pts)
+        c = (sum(p[0] for p in pts) / m,
+             sum(p[1] for p in pts) / m,
+             sum(p[2] for p in pts) / m)
+
+        # in-plane orthonormal basis (u, v) perpendicular to N
+        seed = [0.0, 0.0, 0.0]
+        seed[min(range(3), key=lambda i: abs(N[i]))] = 1.0   # axis least aligned with N
+        u = _unit(_cross(N, tuple(seed)))
+        if u is None:
+            return None, None
+        v = _cross(N, u)                                     # unit (N,u orthonormal)
+
+        # project points into (a, b) and build the 2x2 covariance
+        A, Saa, Sbb, Sab = [], 0.0, 0.0, 0.0
+        for p in pts:
+            d = (p[0] - c[0], p[1] - c[1], p[2] - c[2])
+            a = d[0] * u[0] + d[1] * u[1] + d[2] * u[2]
+            b = d[0] * v[0] + d[1] * v[1] + d[2] * v[2]
+            A.append((a, b))
+            Saa += a * a; Sbb += b * b; Sab += a * b
+
+        # principal axis angle, then pick whichever of theta / theta+90 is longer
+        theta = 0.5 * math.atan2(2.0 * Sab, Saa - Sbb)
+
+        def extent(th):
+            ca, sa = math.cos(th), math.sin(th)
+            proj = [a * ca + b * sa for (a, b) in A]
+            return max(proj) - min(proj)
+
+        if extent(theta + math.pi / 2.0) > extent(theta):
+            theta += math.pi / 2.0
+
+        ca, sa = math.cos(theta), math.sin(theta)
+        dir1 = _unit((ca * u[0] + sa * v[0],
+                      ca * u[1] + sa * v[1],
+                      ca * u[2] + sa * v[2]))
+        if dir1 is None:
+            return None, None
+        dir2 = _cross(N, dir1)          # in-plane; dir1 x dir2 == N (perp to surface)
+        return dir1, dir2
+    except Exception:
+        return None, None
 
 
 def target_sets():
