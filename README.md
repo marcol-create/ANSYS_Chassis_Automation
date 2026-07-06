@@ -17,6 +17,7 @@ Python scripts that automates repetitive parts of setup for composite and bumper
 
 ## Quick Workflow
 Prior to Ansys work, pre-prep file in Fusion, surface offsetting faces by 0.00 mm. Give the bumper parts their own files. Save as .step file. 
+Also, downnload the material data if you don't have it already (files are uploaded here too). 
 
 1. **Run a Workbench setup script (New Workbench file)**
    - Run either `workbench_setup(just_acp).py` or `workbench_setup(bumpers_included).py` through **Workbench → File → Scripting**.
