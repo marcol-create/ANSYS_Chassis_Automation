@@ -1,283 +1,206 @@
-# ANSYS Chassis (Semi) Automation Scripts
-
-Python scripts that automate the repetitive parts of setting up composite and bumper analyses for the **Sunstruck** chassis in **ANSYS Workbench** and **ACP**.
-
----
-
-# Included Scripts
-
-| Script | Purpose |
-|---------|---------|
-| `workbench_setup(just_acp).py` | Creates an ACP-only Workbench project. Prompts for the chassis geometry, finds and imports the material data from your computer, and does the Mechanical setup (thickness + named selections). |
-| `workbench_setup(bumpers_included).py` | Creates the full Workbench project with ACP, Front Bumper, and Side Bumper systems. Imports all geometry, meshes the bumper models, and creates the Static Structural and Structural Optimization analyses. |
-| `workbench_setup(with_rollcage).py` | Same as the bumpers project, plus a Rollcage Mechanical Model that imports the rollcage geometry and meshes it (MultiZone hex sweep, default steel — no composite material import). |
-| `acp_materials_rosettes.py` | Creates the Carbon Fiber and Honeycomb fabrics, the **Full Panel** stackup, and one rosette per element set, centered automatically (orienting is still manual). |
-| `acp_oss_plies_solids.py` | Creates the oriented selection sets (OSSs), modeling groups, plies, and solid models from the finalized rosettes. |
-
----
-
-## Quick Workflow
-Before starting in Ansys, prep the file in Fusion: surface-offset the faces by 0.00 mm, give the bumper parts their own files, and save as `.step`.
-Also grab the material data if you don't have it yet (the files are in this repo too).
-
-1. **Run a Workbench setup script (new Workbench file)**
-   - Run `workbench_setup(just_acp).py`, `workbench_setup(bumpers_included).py`, or `workbench_setup(with_rollcage).py` through **Workbench → File → Scripting**.
-   - The script creates the Workbench project, pulls in the material data from your computer, lets you pick the geometry file(s), generates the Named Selections, and — for the bumper and rollcage workflows — meshes the bumper/rollcage models and creates the Static Structural and Structural Optimization analyses.
-
-2. **Generate the chassis mesh (Mechanical)**
-   - Open the ACP Mechanical model and mesh the chassis at whatever coarseness fits your analysis.
-
-3. **Create the composite model (ACP)**
-   - Run `acp_materials_rosettes.py` in **ACP → File → Run Script**.
-   - This creates the Carbon Fiber and Honeycomb fabrics, the **Full Panel** stackup, and one rosette per element set. The rosettes are centered but still need manual orienting.
-
-4. **Finalize the rosette orientations**
-   - **Manual step:** go through each rosette and set its direction and flip to match the fiber/offset direction you want for that panel.
-
-5. **Generate the ACP model**
-   - Run `acp_oss_plies_solids.py` in **ACP → File → Run Script**.
-   - This creates the Oriented Selection Sets (OSSs), Modeling Groups, **Full Panel** plies, and Solid Models for every element set, linking everything by name.
-   - Assign draping as needed.
-
-6. **Update ACP**
-   - Update the ACP model, then head back to Workbench to continue with the structural analyses.
-
----
-
-# Summary of Manual Parts
-
-- Meshing (Mechanical)
-- Rosette orientation (ACP)
-- Draping (ACP)
-
-# More detailed steps
-# 1. Workbench Setup
-
-## Option A — ACP Only
-
-### Required Geometry
-
-- 📦 Chassis panels STEP file
-
-In **ANSYS Workbench**:
-
-```text
-File → Scripting → Run Script File
-```
-
-Run:
-
-```text
-workbench_setup(just_acp).py
-```
-
-Select the chassis STEP file when prompted.
-
-The script creates:
-
-- ✅ ACP (Pre) system
-- ✅ Imports Carbon Fiber and Aluminum Honeycomb material data
-- ✅ Imports the chassis geometry
-- ✅ Opens ACP Mechanical
-- ✅ Assigns a **1 mm** thickness to every surface body
-- ✅ Creates a Named Selection for every body
-- ✅ Saves the Workbench project
-
----
-
-## Option B — ACP + Bumpers
-
-### Required Geometry
-
-- 📦 Chassis panels STEP file
-- 🚗 Front bumper STEP file
-- 🚗 Side bumper STEP file
-
-In **ANSYS Workbench**:
-
-```text
-File → Scripting → Run Script File
-```
-
-Run:
-
-```text
-workbench_setup(bumpers_included).py
-```
-
-Select the chassis, front bumper, and side bumper STEP files when prompted.
-
-The script creates:
-
-### ACP
-
-- ✅ ACP (Pre) system
-- ✅ Imports Carbon Fiber and Aluminum Honeycomb material data
-- ✅ Imports the chassis geometry
-- ✅ Opens ACP Mechanical
-- ✅ Assigns a **1 mm** thickness to every surface body
-- ✅ Creates a Named Selection for every body
-
-<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/ecf6b3ed-9fdf-450a-bd1f-79e01b3e82bb" />
-
-
-
-### Bumpers
-
-- ✅ Front and Side Bumper Mechanical systems
-- ✅ Imports bumper geometry
-- ✅ Assigns **1 mm** thickness to all surface bodies
-- ✅ Generates a **3 mm** global mesh
-- ✅ Creates Static Structural analyses
-- ✅ Creates Structural Optimization analyses
-- ✅ Saves the Workbench project
-
-<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/e8c1fed6-32fb-4de7-b3f2-82b00256fe39" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/b690991e-21c5-437b-bdd1-010254c5b993" />
-
----
-
-## Option C — ACP + Bumpers + Rollcage
-
-Same as Option B, with an added Rollcage Mechanical Model.
-
-### Required Geometry
-
-- 📦 Chassis panels STEP file
-- 🚗 Front bumper STEP file
-- 🚗 Side bumper STEP file
-- 🧰 Rollcage STEP file (solid, hollow tubes)
-
-In **ANSYS Workbench**:
-
-```text
-File → Scripting → Run Script File
-```
-
-Run:
-
-```text
-workbench_setup(with_rollcage).py
-```
-
-Select the chassis, front bumper, side bumper, and rollcage STEP files when prompted (in that order).
-
-Everything from Option B, plus:
-
-### Rollcage
-
-- ✅ Rollcage Mechanical Model system
-- ✅ Imports the rollcage geometry
-- ✅ Keeps the default **Structural Steel** material (no composite material import for this block)
-- ✅ Meshes with a **MultiZone hex sweep**, sized for the tube wall
-
-> **Rollcage mesh note:** The tubes are hollow, so a plain coarse mesh doesn't resolve the wall. The script uses a MultiZone (hex sweep) mesh instead. Set `ROLLCAGE_SIZE` (top of the rollcage command in the script) to about **wall thickness ÷ 3** to get 2–3 elements across the wall. MultiZone sweeps the straight tube sections into hex and falls back to tets at the junctions. If you'd rather have a much lighter model, the tubes can instead be built as beams (line bodies with tube cross-sections) in SpaceClaim.
-
----
-
-# 2. Mesh the Chassis
-
-Open the **ACP Mechanical** model and generate the chassis mesh.
-
-Pick the element sizing and any local refinement that fits your analysis.
-
-<img width="2560" height="1540" alt="image" src="https://github.com/user-attachments/assets/cd505e9f-45f0-4a9a-a5b1-fe7f8f1bc9b8" />
-
----
-
-# 3. ACP Materials, Stackup & Rosettes
-
-In **ACP**:
-
-```text
-File → Run Script
-```
-
-Run:
-
-```text
-acp_materials_rosettes.py
-```
-
-The script creates:
-
-- ✅ Carbon Fiber fabric
-- ✅ Honeycomb fabric
-- ✅ **Full Panel** stackup
-
-```
-Carbon Fiber (0°)
-Carbon Fiber (90°)
-Aluminum Honeycomb (0°)
-Carbon Fiber (0°)
-Carbon Fiber (90°)
-```
-
-- ✅ One centroid-based rosette for every element set
-
-<img width="610" height="979" alt="image" src="https://github.com/user-attachments/assets/13564262-c9be-40b3-acc7-a719828bf01a" />
-
----
-
-# 4. Finalize the Rosettes (Manual)
-
-Before continuing, orient each rosette by hand.
-
-For every rosette, check:
-
-- Direction
-- Flip
-- Offset direction
-
-Each surface may need a different orientation.
-
----
-
-# 5. OSSs, Plies & Solid Models
-
-In **ACP**:
-
-```text
-File → Run Script
-```
-
-Run:
-
-```text
-acp_oss_plies_solids.py
-```
-
-The script creates:
-
-- ✅ One Oriented Selection Set (OSS) per element set
-- ✅ One Modeling Group with a **Full Panel** ply per element set
-- ✅ One Solid Model per element set
-- ✅ **Analysis Ply Wise** extrusion
-- ✅ Links all ACP objects by matching names
-
-<table>
-  <tr>
-    <td align="center"><b>OSS Orientation Options</b></td>
-    <td align="center"><b>ACP Objects</b></td>
-  </tr>
-  <tr>
-    <td align="center"><img height="460" alt="OSS Orientation Options" src="https://github.com/user-attachments/assets/fccf9a34-4582-4a3e-9a8b-fa1b4c5328a8" /></td>
-    <td align="center"><img height="460" alt="ACP Objects" src="https://github.com/user-attachments/assets/4b692e55-4761-425c-a9fe-2e7063166209" /></td>
-  </tr>
-</table>
-
-### Final ACP Model
-
-
-
-Update the ACP model, then return to Workbench to continue with your analysis.
-
----
-
-# Notes
-
-- Run each ACP script **once** on a clean ACP model.
-- Mesh the **chassis manually** before running the ACP scripts.
-- The **bumper meshes** are generated automatically by `workbench_setup(bumpers_included).py`.
-- The **rollcage mesh** is generated automatically by `workbench_setup(with_rollcage).py` (MultiZone hex sweep); set `ROLLCAGE_SIZE` to roughly the tube wall thickness ÷ 3.
-- All ACP objects (element sets, rosettes, OSSs, modeling groups, plies, and solid models) are linked by matching names, so avoid renaming element sets after setup.
+# =====================================================================
+#  ACP (Pre) -- SCRIPT 1 of 2 : materials + stackup + rosettes
+# =====================================================================
+#  Run INSIDE ACP (File > Run Script), after mesh + element sets + materials.
+#
+#  1. Fabrics  : HC (honeycomb, 12.192), CF (carbon fiber, 0.127)
+#  2. Stackup  : "Full Panel" = CF/0, CF/90, HC/0, CF/0, CF/90
+#  3. Rosettes : one per element set, at the set centroid
+#
+#  >>> After this, adjust the rosettes manually. THEN run script 2
+#      (acp_oss_plies_solids.py) to build OSS / plies / solid models.
+# =====================================================================
+
+# ---------------- CONFIG ----------------
+HC_KEYS = ["honeycomb", "al_hc", "hc", "alum"]
+CF_KEYS = ["carbon", "cf", "fiber", "fibre"]
+HC_THICKNESS = 12.192
+CF_THICKNESS = 0.127
+STACKUP_NAME = "Full Panel"
+SKIP_SETS = ["All_Elements"]
+
+# ---------------- MODEL ----------------
+try:
+    db
+except NameError:
+    import compolyx
+    db = compolyx.DB()
+model = db.active_model
+md    = model.material_data
+
+
+# ---------------- HELPERS ----------------
+def find_material(keys, label):
+    for k in keys:
+        kl = k.lower()
+        for nm in md.materials.keys():
+            if kl in nm.lower():
+                print("%s material -> '%s'" % (label, nm))
+                return md.materials[nm]
+    avail = ", ".join("'%s'" % n for n in md.materials.keys())
+    raise KeyError("No %s material found (tried %s). Available: [%s]"
+                   % (label, keys, avail))
+
+
+def _avg(arr):
+    flat = list(arr)
+    if not flat:
+        return None
+    if hasattr(flat[0], "__len__"):
+        n = len(flat)
+        return (sum(p[0] for p in flat) / n,
+                sum(p[1] for p in flat) / n,
+                sum(p[2] for p in flat) / n)
+    xs, ys, zs = flat[0::3], flat[1::3], flat[2::3]
+    n = len(xs)
+    return (sum(xs) / n, sum(ys) / n, sum(zs) / n)
+
+
+def _triples(arr):
+    """Normalize a coordinate result to a list of (x, y, z) tuples."""
+    flat = list(arr)
+    if not flat:
+        return []
+    if hasattr(flat[0], "__len__"):
+        return [(p[0], p[1], p[2]) for p in flat]
+    return [(flat[i], flat[i + 1], flat[i + 2]) for i in range(0, len(flat) - 2, 3)]
+
+
+# Snap the origin to the nearest element in the set so it always sits ON that
+# face (not floating off a curved/L-shaped face or drifting onto a neighbor).
+SNAP_TO_ELEMENT = True
+
+
+def set_center(es):
+    try:
+        model.select_elements(selection="sel0", op="new", attached_to=[es])
+        pts = _triples(model.mesh_query(name="coordinates", position="centroid",
+                                        selection="sel0"))
+        if not pts:
+            return None
+        n = len(pts)
+        c = (sum(p[0] for p in pts) / n,
+             sum(p[1] for p in pts) / n,
+             sum(p[2] for p in pts) / n)
+        if not SNAP_TO_ELEMENT:
+            return c
+        # nearest element centroid to the average -> guaranteed on this set
+        best, bestd = None, None
+        for p in pts:
+            d = (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2
+            if bestd is None or d < bestd:
+                bestd, best = d, p
+        return best
+    except Exception:
+        return None
+
+
+def _cross(a, b):
+    return (a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0])
+
+
+def _unit(v):
+    import math
+    m = math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
+    return None if m < 1e-9 else (v[0] / m, v[1] / m, v[2] / m)
+
+
+def rosette_axes(es):
+    """Compute (dir1, dir2) so the rosette normal (dir1 x dir2) is perpendicular
+    to the surface and dir1 runs along the surface's LONG side.
+    Returns (None, None) if it can't be determined (caller falls back)."""
+    try:
+        import math
+        model.select_elements(selection="sel0", op="new", attached_to=[es])
+        pts = _triples(model.mesh_query(name="coordinates", position="centroid",
+                                        selection="sel0"))
+        norms = _triples(model.mesh_query(name="normals", position="centroid",
+                                          selection="sel0"))
+        if len(pts) < 3 or not norms:
+            return None, None
+
+        # surface normal = averaged element normal
+        N = _unit((sum(n[0] for n in norms),
+                   sum(n[1] for n in norms),
+                   sum(n[2] for n in norms)))
+        if N is None:
+            return None, None
+
+        # centroid of the points
+        m = len(pts)
+        c = (sum(p[0] for p in pts) / m,
+             sum(p[1] for p in pts) / m,
+             sum(p[2] for p in pts) / m)
+
+        # in-plane orthonormal basis (u, v) perpendicular to N
+        seed = [0.0, 0.0, 0.0]
+        seed[min(range(3), key=lambda i: abs(N[i]))] = 1.0   # axis least aligned with N
+        u = _unit(_cross(N, tuple(seed)))
+        if u is None:
+            return None, None
+        v = _cross(N, u)                                     # unit (N,u orthonormal)
+
+        # project points into (a, b) and build the 2x2 covariance
+        A, Saa, Sbb, Sab = [], 0.0, 0.0, 0.0
+        for p in pts:
+            d = (p[0] - c[0], p[1] - c[1], p[2] - c[2])
+            a = d[0] * u[0] + d[1] * u[1] + d[2] * u[2]
+            b = d[0] * v[0] + d[1] * v[1] + d[2] * v[2]
+            A.append((a, b))
+            Saa += a * a; Sbb += b * b; Sab += a * b
+
+        # principal axis angle, then pick whichever of theta / theta+90 is longer
+        theta = 0.5 * math.atan2(2.0 * Sab, Saa - Sbb)
+
+        def extent(th):
+            ca, sa = math.cos(th), math.sin(th)
+            proj = [a * ca + b * sa for (a, b) in A]
+            return max(proj) - min(proj)
+
+        if extent(theta + math.pi / 2.0) > extent(theta):
+            theta += math.pi / 2.0
+
+        ca, sa = math.cos(theta), math.sin(theta)
+        dir1 = _unit((ca * u[0] + sa * v[0],
+                      ca * u[1] + sa * v[1],
+                      ca * u[2] + sa * v[2]))
+        if dir1 is None:
+            return None, None
+        dir2 = _cross(N, dir1)          # in-plane; dir1 x dir2 == N (perp to surface)
+        return dir1, dir2
+    except Exception:
+        return None, None
+
+
+def target_sets():
+    return [n for n in model.element_sets.keys() if n not in SKIP_SETS]
+
+
+# ---------------- 1. FABRICS ----------------
+hc = md.create_fabric(name="HC",
+                      material=find_material(HC_KEYS, "Honeycomb"),
+                      thickness=HC_THICKNESS)
+cf = md.create_fabric(name="CF",
+                      material=find_material(CF_KEYS, "Carbon fiber"),
+                      thickness=CF_THICKNESS)
+print("Fabrics created: HC (%g), CF (%g)" % (hc.thickness, cf.thickness))
+
+# ---------------- 2. STACKUP ----------------
+full = md.create_stackup(name=STACKUP_NAME)
+for fab, ang in [(cf, 0.0), (cf, 90.0), (hc, 0.0), (cf, 0.0), (cf, 90.0)]:
+    full.add_fabric(fab, ang)
+print("Stackup '%s' created (%d fabrics)." % (STACKUP_NAME, len(full.fabrics)))
+
+# ---------------- 3. ROSETTES ----------------
+for name in target_sets():
+    es = model.element_sets[name]
+    origin = set_center(es) or (0.0, 0.0, 0.0)
+    model.create_rosette(name, origin=origin,
+                         dir1=(1.0, 0.0, 0.0), dir2=(0.0, 1.0, 0.0),
+                         rosette_type="PARALLEL")
+    print("Rosette '%s' at (%.3f, %.3f, %.3f)" % (name, origin[0], origin[1], origin[2]))
+
+model.update()
+print("Done -- SCRIPT 1 complete. Adjust rosettes, then run script 2.")
