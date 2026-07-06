@@ -265,7 +265,7 @@ The script creates:
 
 ### Final ACP Model
 
-<img width="1128" height="723" alt="image" src="https://github.com/user-attachments/assets/fdecc10c-1c5f-4252-a445-9c8117733a1e" />
+
 
 Update the ACP model, then return to Workbench to continue with your analysis.
 
