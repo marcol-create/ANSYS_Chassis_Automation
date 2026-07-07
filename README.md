@@ -208,6 +208,9 @@ For **each** seat gap:
 - Create a **Named Selection scoped to the three edges** of that gap.
 - Name them `EdgeSet1`, `EdgeSet2`, `EdgeSet3`, `EdgeSet4` (one per gap).
 
+- <img width="1384" height="708" alt="image" src="https://github.com/user-attachments/assets/f5302628-c9c1-409f-90bd-9131a1d17126" />
+
+
 Also confirm the seat's surface body / element set is named **`Seat`** — `acp_gap_extrusion_guides.py` looks the seat solid model up by that exact name.
 
 Then **update the ACP (Pre) setup** so these named selections propagate into ACP as edge sets. (They do not appear in `model.edge_sets` until the setup is updated.)
