@@ -185,7 +185,7 @@ Everything from Option B, plus:
 - Uses the default **Structural Steel** material
 - Generates a MultiZone hex sweep mesh
 
-![Uploading image.png…]()
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/cbb7e36b-6e9c-4e35-837e-d3ed37915d76" />
 
 
 ---
