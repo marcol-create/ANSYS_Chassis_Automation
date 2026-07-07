@@ -13,6 +13,7 @@ Python scripts that automate the repetitive parts of setting up composite and bu
 | `workbench_setup(with_rollcage).py` | Same as the bumper workflow, with an additional Rollcage Mechanical Model that imports the rollcage geometry and generates a MultiZone hex mesh using the default Structural Steel material. |
 | `acp_materials_rosettes.py` | Creates the Carbon Fiber and Honeycomb materials, the **Full Panel** layup, and one centered rosette for every element set (orientation is still manual). |
 | `acp_oss_plies_solids.py` | Creates the Oriented Selection Sets (OSSs), Modeling Groups, plies, and solid models from the finalized rosettes. |
+| `acp_gap_extrusion_guides.py` | Adds a localized extrusion guide to each seat gap so the gap walls extrude **flush (horizontal)** to the support panels passing through them, while the seat body keeps extruding normal to its own face. Run last. |
 
 ---
 
@@ -33,19 +34,28 @@ If needed, download the material data files included in this repository.
 2. **Generate the chassis mesh**
    - Open the ACP Mechanical model and generate the chassis mesh using the sizing appropriate for your analysis.
 
-3. **Create the ACP model**
+3. **Create the gap edge sets** *(only if using the flush-gap guides)*
+   - Still in the ACP Mechanical model, create one **Named Selection per seat gap**, each scoping the **three edges** of that gap, named `EdgeSet1`, `EdgeSet2`, `EdgeSet3`, `EdgeSet4`.
+   - Confirm the seat's surface body / element set is named **`Seat`** (the guide script targets that name).
+   - Update the ACP (Pre) setup so the named selections propagate into ACP as edge sets.
+
+4. **Create the ACP model**
    - In **ACP → File → Run Script**, run `acp_materials_rosettes.py`.
    - The script creates the Carbon Fiber and Honeycomb materials, the **Full Panel** layup, and one centered rosette for every element set.
 
-4. **Orient the rosettes**
+5. **Orient the rosettes**
    - Manually set the direction, flip, and offset direction for each rosette.
 
-5. **Generate the remaining ACP objects**
+6. **Generate the remaining ACP objects**
    - Run `acp_oss_plies_solids.py`.
    - The script creates the OSSs, Modeling Groups, plies, and solid models, linking everything by matching names.
    - Assign draping where needed.
 
-6. **Update ACP**
+7. **Make the seat gaps flush** *(optional — run last)*
+   - Run `acp_gap_extrusion_guides.py` **after** `acp_oss_plies_solids.py`, once the `Seat` solid model exists.
+   - It adds one extrusion guide per gap (`EdgeSet1..EdgeSet4`) on the `Seat` solid model, so those gaps extrude flush to the support panels. Only the seat is affected; every other panel is untouched. See section 7 for the check-and-flip step.
+
+8. **Update ACP**
    - Update the ACP model, then return to Workbench to continue with the structural analyses.
 
 ---
@@ -55,8 +65,10 @@ If needed, download the material data files included in this repository.
 The following steps are still completed manually:
 
 - Mesh the chassis
+- Create the gap edge-set named selections (`EdgeSet1..EdgeSet4`), three edges each
 - Orient the rosettes
 - Assign draping
+- Check and (if needed) flip the gap guide direction after running `acp_gap_extrusion_guides.py`
 
 ---
 
@@ -187,7 +199,24 @@ Choose the element size and any local refinement appropriate for your analysis.
 
 ---
 
-# 3. Materials, Layup & Rosettes
+# 3. Create the Gap Edge Sets *(optional — for flush gaps)*
+
+If you want the seat gaps to sit flush against the support panels that pass through them, create the edge sets now, while you are still in the ACP Mechanical model.
+
+For **each** seat gap:
+
+- Create a **Named Selection scoped to the three edges** of that gap.
+- Name them `EdgeSet1`, `EdgeSet2`, `EdgeSet3`, `EdgeSet4` (one per gap).
+
+Also confirm the seat's surface body / element set is named **`Seat`** — `acp_gap_extrusion_guides.py` looks the seat solid model up by that exact name.
+
+Then **update the ACP (Pre) setup** so these named selections propagate into ACP as edge sets. (They do not appear in `model.edge_sets` until the setup is updated.)
+
+> Skip this section if you are not using the flush-gap guides.
+
+---
+
+# 4. Materials, Layup & Rosettes
 
 In **ACP**:
 
@@ -221,7 +250,7 @@ Carbon Fiber (90°)
 
 ---
 
-# 4. Orient the Rosettes
+# 5. Orient the Rosettes
 
 Before continuing, orient each rosette manually.
 
@@ -233,9 +262,11 @@ Check the:
 
 Each panel may require a different orientation.
 
+> The seat rosette (named `Seat`) should have its blue Z axis normal to the seat face. The flush-gap script reads this normal to derive the horizontal guide direction, so getting it right here also drives step 7.
+
 ---
 
-# 5. OSSs, Plies & Solid Models
+# 6. OSSs, Plies & Solid Models
 
 In **ACP**:
 
@@ -262,6 +293,61 @@ The script creates:
 
 <img height="460" alt="image" src="https://github.com/user-attachments/assets/4b692e55-4761-425c-a9fe-2e7063166209" />
 
+---
+
+# 7. Flush Gap Extrusion Guides *(optional)*
+
+> **Placement — run this LAST.** `acp_gap_extrusion_guides.py` is the final ACP script, run *after* `acp_oss_plies_solids.py` and *before* the final ACP update / return to Workbench. It attaches guides as children of the **existing** `Seat` solid model, so that solid model must already have been created by `acp_oss_plies_solids.py` — running it earlier will fail because there is no solid model to attach to. It does **not** replace or rebuild any solid model; it adds four guides to the seat and re-extrudes only that one part on the next update. Every other panel is left exactly as `acp_oss_plies_solids.py` produced it.
+>
+> It is also **idempotent and standalone**: it only touches `Seat` and the four gap edge sets, reads nothing it doesn't need, and skips guides that already exist — so it is safe to re-run on its own (e.g. after flipping a direction) without re-running the earlier scripts.
+
+The seat wall sits at an angle (~65°) and extrudes **normal** to its own face — which is correct — but the horizontal support panels pass through the seat gaps. Because the gap walls also extrude along the tilted seat normal, they only meet the horizontal supports along a single line, leaving a wedge-shaped void.
+
+`acp_gap_extrusion_guides.py` fixes this by adding **one extrusion guide per gap**, scoped to that gap's edge set. Each guide re-points **only** those edges along a horizontal direction, so the four gap walls lie flat (horizontal) and sit flush against the supports. The rest of the seat, and every other panel, is untouched and keeps extruding normally.
+
+### Prerequisites
+
+- `acp_oss_plies_solids.py` has been run (the `Seat` solid model must already exist).
+- Edge sets `EdgeSet1..EdgeSet4` exist (see section 3), three edges each.
+- The seat solid model / element set / rosette are all named `Seat`.
+
+### Run
+
+In **ACP → File → Run Script**, run:
+
+```text
+acp_gap_extrusion_guides.py
+```
+
+### Key config (top of the script)
+
+| Setting | Meaning |
+|---------|---------|
+| `SEAT_SET` / `SEAT_ROSETTE` | Names of the seat solid model and its rosette (default `"Seat"`). |
+| `EDGE_SETS` | The gap edge sets to guide (default `EdgeSet1..EdgeSet4`). |
+| `UP_AXIS` | Vertical axis; `(0,0,1)` for Z-up. |
+| `GUIDE_FLIP` | Negate the horizontal direction if the wedge gets **worse**. |
+| `GUIDE_RADIUS` | Sphere of influence — keep tight so the tilt stays local. |
+| `FIXED_HORIZONTAL` | Override the derived direction; also accepts a per-gap dict. |
+
+The horizontal direction is derived automatically by taking the seat rosette's normal and flattening out the vertical component — no need to compute it by hand.
+
+### Check after running
+
+Take a **section cut** through each gap and look at the wall:
+
+- **Wedge closed, wall flat on the support** → done.
+- **Wedge got wider** → the direction is reversed; set `GUIDE_FLIP = True` and re-run.
+- **Wall looks warped/distorted** → lower `GUIDE_RADIUS`, or split the gap's third edge (the one running along the guide direction) onto its own guide.
+
+### Notes
+
+- **Ply orientation is preserved.** The guide only re-points mesh nodes; fiber directions and ply angles at the gaps come from the same `Seat` rosette/OSS as the rest of the seat. There is no separate composite orientation at the gaps.
+- The guide gives **geometric** flushness only. The seat and support meshes are not node-conformal at the interface, so still define a bonded (or frictional) contact between them in Mechanical for load transfer.
+- Re-running is safe: guides already present are skipped. Delete a guide in the tree (or set `SKIP_IF_EXISTS = False`) to recreate it with different settings.
+
+---
+
 ### Final ACP Model
 
 Update the ACP model, then return to Workbench to continue with the structural analyses.
@@ -272,6 +358,8 @@ Update the ACP model, then return to Workbench to continue with the structural a
 
 - Run each ACP script **once** on a clean ACP model.
 - Generate the chassis mesh before running the ACP scripts.
+- Create the `EdgeSet1..EdgeSet4` named selections (three edges each) **before** running `acp_gap_extrusion_guides.py`, and update the ACP (Pre) setup so they propagate.
+- The seat body must be named `Seat` for the flush-gap script to find it.
 - The bumper meshes are generated automatically by `workbench_setup(bumpers_included).py`.
 - The rollcage mesh is generated automatically by `workbench_setup(with_rollcage).py`.
 - Set `ROLLCAGE_SIZE` to approximately **wall thickness ÷ 3** for 2–3 elements through the tube wall.
