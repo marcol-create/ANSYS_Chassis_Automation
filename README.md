@@ -10,7 +10,7 @@ Python scripts that automate the repetitive parts of setting up composite and bu
 |---------|---------|
 | `workbench_setup(just_acp).py` | Creates an ACP-only Workbench project. Prompts for the chassis geometry, imports the material data from your computer, and completes the initial Mechanical setup (thickness + named selections). |
 | `workbench_setup(bumpers_included).py` | Creates the full Workbench project with ACP, Front Bumper, and Side Bumper systems. Imports all geometry, meshes the bumper models, and creates the Static Structural and Structural Optimization analyses. |
-| `workbench_setup(with_rollcage).py` | Same as the bumper workflow, with an additional Rollcage Mechanical Model that imports the rollcage geometry and generates a MultiZone hex mesh using the default Structural Steel material. |
+| `workbench_setup(with_rollcage).py` | Same as the bumper workflow, with an additional Rollcage Mechanical Model that imports the rollcage geometry, merges its bodies into one, and generates a plain 10 mm mesh using the default Structural Steel material. |
 | `acp_materials_rosettes.py` | Creates the Carbon Fiber and Honeycomb materials, the **Full Panel** layup, and one centered rosette for every element set (orientation is still manual). |
 | `acp_oss_plies_solids.py` | Creates the Oriented Selection Sets (OSSs), Modeling Groups, plies, and solid models from the finalized rosettes. |
 | `acp_gap_extrusion_guides.py` | Adds a localized extrusion guide to each seat gap so the gap walls extrude **flush (horizontal)** to the support panels passing through them, while the seat body keeps extruding normal to its own face. Run last. |
@@ -183,10 +183,8 @@ Everything from Option B, plus:
 
 - Imports the rollcage geometry
 - Uses the default **Structural Steel** material
-- Generates a MultiZone hex sweep mesh
-
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/cbb7e36b-6e9c-4e35-837e-d3ed37915d76" />
-
+- Merges all rollcage bodies into a single body (if not already one)
+- Generates a plain **10 mm** mesh
 
 ---
 
@@ -208,9 +206,6 @@ For **each** seat gap:
 
 - Create a **Named Selection scoped to the three edges** of that gap.
 - Name them `EdgeSet1`, `EdgeSet2`, `EdgeSet3`, `EdgeSet4` (one per gap).
-
-- <img width="1384" height="708" alt="image" src="https://github.com/user-attachments/assets/f5302628-c9c1-409f-90bd-9131a1d17126" />
-
 
 Also confirm the seat's surface body / element set is named **`Seat`** — `acp_gap_extrusion_guides.py` looks the seat solid model up by that exact name.
 
@@ -365,6 +360,5 @@ Update the ACP model, then return to Workbench to continue with the structural a
 - Create the `EdgeSet1..EdgeSet4` named selections (three edges each) **before** running `acp_gap_extrusion_guides.py`, and update the ACP (Pre) setup so they propagate.
 - The seat body must be named `Seat` for the flush-gap script to find it.
 - The bumper meshes are generated automatically by `workbench_setup(bumpers_included).py`.
-- The rollcage mesh is generated automatically by `workbench_setup(with_rollcage).py`.
-- Set `ROLLCAGE_SIZE` to approximately **wall thickness ÷ 3** for 2–3 elements through the tube wall.
+- The rollcage is merged into one body and meshed at **10 mm** automatically by `workbench_setup(with_rollcage).py`.
 - All ACP objects are linked by matching names, so avoid renaming element sets after the initial setup.
